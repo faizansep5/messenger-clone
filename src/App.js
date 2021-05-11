@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
-import { FormControl, Input } from "@material-ui/core";
 import Message from "./Message";
 import db from "./firebase";
 import firebase from "firebase";
-import FlipMove from "react-flip-move";
 import SendIcon from "@material-ui/icons/Send";
-import { IconButton } from "@material-ui/core";
 
 function App() {
   const [input, setInput] = useState("");
@@ -15,7 +12,7 @@ function App() {
   //For database
   useEffect(() => {
     db.collection("messages")
-      .orderBy("timestamp", "desc")
+      .orderBy("timestamp", "asc")
       .onSnapshot((snap) => {
         setMessages(
           snap.docs.map((doc) => ({ id: doc.id, message: doc.data() }))
@@ -28,6 +25,9 @@ function App() {
     // If it's [] blank, this useEffect runs only once when the App component loads.
   }, []);
 
+  //For scroll
+  const dummy = useRef();
+
   const sendMessage = (event) => {
     //all the logic to send a message
     db.collection("messages").add({
@@ -37,45 +37,37 @@ function App() {
     });
     setInput("");
     event.preventDefault();
+
+    dummy.current.scrollIntoView({ behavior: "smooth" });
   };
   return (
     <div className="App">
-      <img
-        className="app__img"
-        src="https://facebookbrand.com/wp-content/uploads/2018/09/Header-e1538151782912.png?w=100&h=100"
-        alt="Facebook-messenger"
-      />
-      <h1 className="app__title">Hello Programmers!💻</h1>
-      <h2>Welcome {username}</h2>
-      <form className="app__form">
-        <FormControl className="app-formControl">
-          <Input
-            className="app__input"
+      <header>
+        <h1>⚛️🔥💬</h1>
+        <h2>{username}</h2>
+      </header>
+      <section>
+        {/* Displaying messages */}
+        <main>
+          {messages.map(({ id, message }) => (
+            <Message key={id} username={username} message={message} />
+          ))}
+          <span ref={dummy}></span>
+          <span style={{ marginBottom: "100px" }}></span>
+        </main>
+        <form>
+          <input
             placeholder="Enter a message..."
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
             }}
           />
-
-          <IconButton
-            className="app__iconButton"
-            disabled={!input}
-            variant="contained"
-            color="primary"
-            type="submit"
-            onClick={sendMessage}
-          >
+          <button type="submit" disabled={!input} onClick={sendMessage}>
             <SendIcon />
-          </IconButton>
-        </FormControl>
-      </form>
-      {/* Displaying messages */}
-      <FlipMove>
-        {messages.map(({ id, message }) => (
-          <Message key={id} username={username} message={message} />
-        ))}
-      </FlipMove>
+          </button>
+        </form>
+      </section>
     </div>
   );
 }
